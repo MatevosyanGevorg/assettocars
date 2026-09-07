@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>AssettoCars — Админ-панель</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0c; --bg-alt:#0d0d10; --surface:#151418; --surface-2:#1b1a1f; --line:#29282e;
+    --text:#f2efe9; --text-dim:#9b98a1; --text-faint:#58565e;
+    --red:#e1263b; --red-dim:#7a1521; --amber:#f2a93b; --blue:#4c8dff; --teal:#2fd3c7; --green:#3ecf72;
+    --radius-s:6px; --radius-m:10px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; line-height:1.5; min-height:100vh; }
+  h1,h2,h3,.display{ font-family:'Rajdhani',sans-serif; font-weight:700; }
+  button,input,select,textarea{ font-family:inherit; }
+  a{ color:inherit; }
+  ::selection{ background:var(--red); color:#fff; }
+
+  /* ---------- GATE ---------- */
+  .gate{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+    background:radial-gradient(ellipse 800px 500px at 50% 0%, rgba(225,38,59,0.14), transparent 60%), var(--bg); }
+  .gate-card{ width:100%; max-width:420px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m); padding:40px; }
+  .gate-logo{ display:flex; align-items:center; gap:10px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:1.2rem; margin-bottom:6px; }
+  .gate-logo .dot{ width:9px; height:9px; border-radius:50%; background:var(--red); box-shadow:0 0 10px var(--red); }
+  .gate-sub{ color:var(--text-dim); font-size:0.9rem; margin-bottom:28px; }
+  .field{ margin-bottom:18px; }
+  .field label{ display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:8px; }
+  .field input{ width:100%; padding:12px 14px; border-radius:var(--radius-s); border:1px solid var(--line); background:var(--bg); color:var(--text); font-size:0.92rem; }
+  .field input:focus{ outline:none; border-color:var(--red); }
+  .field-hint{ font-size:0.78rem; color:var(--text-faint); margin-top:6px; }
+  .btn-primary{ width:100%; padding:14px; border-radius:var(--radius-s); background:var(--red); color:#fff; font-weight:600; border:none; cursor:pointer; font-size:0.95rem; transition:transform .18s ease; }
+  .btn-primary:hover{ transform:translateY(-2px); }
+  .btn-primary:disabled{ opacity:0.5; cursor:default; transform:none; }
+  .gate-error{ color:var(--red); font-size:0.85rem; margin-top:14px; display:none; }
+  .gate-note{ margin-top:24px; padding-top:20px; border-top:1px solid var(--line); font-size:0.78rem; color:var(--text-faint); line-height:1.6; }
+
+  /* ---------- APP SHELL ---------- */
+  .app{ display:none; }
+  header{ position:sticky; top:0; z-index:50; background:rgba(10,10,12,0.9); backdrop-filter:blur(12px); border-bottom:1px solid var(--line); }
+  .nav{ max-width:1200px; margin:0 auto; padding:0 28px; height:70px; display:flex; align-items:center; justify-content:space-between; }
+  .logo{ display:flex; align-items:center; gap:10px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:1.15rem; }
+  .logo .dot{ width:8px; height:8px; border-radius:50%; background:var(--red); box-shadow:0 0 8px var(--red); }
+  .logo .tag{ font-size:0.72rem; padding:3px 8px; border-radius:999px; background:var(--surface-2); color:var(--text-dim); border:1px solid var(--line); margin-left:4px; }
+  .nav-right{ display:flex; align-items:center; gap:14px; }
+  .nav-status{ font-size:0.82rem; color:var(--text-dim); }
+  .nav-status b{ color:var(--text); }
+  .btn-logout{ padding:9px 16px; border-radius:999px; border:1px solid var(--line); color:var(--text-dim); background:none; cursor:pointer; font-size:0.85rem; }
+  .btn-logout:hover{ border-color:var(--text-faint); color:var(--text); }
+
+  .wrap{ max-width:1200px; margin:0 auto; padding:36px 28px 100px; }
+  .toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; gap:16px; flex-wrap:wrap; }
+  .toolbar h1{ font-size:1.7rem; }
+  .toolbar-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+  .btn{ padding:11px 18px; border-radius:var(--radius-s); font-weight:600; font-size:0.88rem; cursor:pointer; border:1px solid var(--line); background:var(--surface); color:var(--text); transition:all .18s ease; }
+  .btn:hover{ border-color:var(--text-faint); }
+  .btn-accent{ background:var(--red); border-color:var(--red); color:#fff; }
+  .btn-accent:hover{ box-shadow:0 8px 20px -8px rgba(225,38,59,0.6); }
+  .btn-accent:disabled{ opacity:0.5; cursor:default; box-shadow:none; }
+  .btn-search{ padding:11px 14px; border-radius:var(--radius-s); border:1px solid var(--line); background:var(--surface); color:var(--text); font-size:0.88rem; min-width:220px; }
+
+  .dirty-banner{
+    display:none; align-items:center; justify-content:space-between; gap:16px;
+    background:linear-gradient(135deg, rgba(242,169,59,0.14), rgba(225,38,59,0.08)); border:1px solid var(--red-dim);
+    border-radius:var(--radius-m); padding:16px 20px; margin-bottom:24px; font-size:0.88rem; color:var(--text);
+  }
+  .dirty-banner b{ color:var(--amber); }
+
+  table{ width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m); overflow:hidden; }
+  thead th{ text-align:left; font-size:0.76rem; color:var(--text-faint); font-weight:600; padding:14px 16px; border-bottom:1px solid var(--line); background:var(--bg-alt); }
+  tbody td{ padding:14px 16px; border-bottom:1px solid var(--line); font-size:0.88rem; vertical-align:middle; }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background:var(--surface-2); }
+  .cell-car{ display:flex; align-items:center; gap:12px; }
+  .cell-icon{ width:44px; height:44px; border-radius:8px; background:var(--bg-alt); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; }
+  .cell-icon svg{ width:70%; }
+  .cell-icon img{ width:100%; height:100%; object-fit:cover; }
+  .cell-name{ font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.98rem; }
+  .cell-brand{ color:var(--text-faint); font-size:0.78rem; }
+  .badge{ display:inline-block; font-size:0.72rem; font-weight:600; padding:4px 9px; border-radius:999px; }
+  .row-actions{ display:flex; gap:8px; justify-content:flex-end; }
+  .icon-btn{ width:32px; height:32px; border-radius:7px; border:1px solid var(--line); background:var(--bg-alt); color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s ease; }
+  .icon-btn:hover{ color:var(--text); border-color:var(--text-faint); }
+  .icon-btn.danger:hover{ color:var(--red); border-color:var(--red-dim); }
+
+  .empty{ text-align:center; padding:60px 20px; color:var(--text-dim); }
+
+  /* ---------- EDIT DRAWER ---------- */
+  .drawer-overlay{ position:fixed; inset:0; background:rgba(6,6,7,0.7); backdrop-filter:blur(4px); z-index:100; display:flex; justify-content:flex-end; opacity:0; pointer-events:none; transition:opacity .25s ease; }
+  .drawer-overlay.open{ opacity:1; pointer-events:auto; }
+  .drawer{ width:min(560px,100%); height:100%; background:var(--bg-alt); border-left:1px solid var(--line); overflow-y:auto; transform:translateX(30px); transition:transform .3s cubic-bezier(.2,.7,.2,1); }
+  .drawer-overlay.open .drawer{ transform:translateX(0); }
+  .drawer-top{ position:sticky; top:0; background:var(--bg-alt); z-index:2; padding:22px 28px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
+  .drawer-top h3{ font-size:1.2rem; }
+  .drawer-close{ width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:none; color:var(--text-dim); cursor:pointer; }
+  .drawer-close:hover{ color:var(--text); border-color:var(--text-faint); }
+  .drawer-body{ padding:26px 28px 40px; }
+  .form-row{ margin-bottom:18px; }
+  .form-row label{ display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:8px; }
+  .form-row input, .form-row select, .form-row textarea{
+    width:100%; padding:11px 14px; border-radius:var(--radius-s); border:1px solid var(--line); background:var(--surface); color:var(--text); font-size:0.9rem;
+  }
+  .form-row input:focus, .form-row select:focus, .form-row textarea:focus{ outline:none; border-color:var(--red); }
+  .form-row textarea{ resize:vertical; min-height:90px; }
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .form-hint{ font-size:0.76rem; color:var(--text-faint); margin-top:6px; }
+  .img-preview{ margin-top:10px; width:100%; height:120px; border-radius:var(--radius-s); border:1px solid var(--line); background:var(--surface); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .img-preview img{ width:100%; height:100%; object-fit:cover; }
+  .img-preview svg{ width:40%; opacity:0.6; }
+  .drawer-actions{ display:flex; gap:12px; margin-top:8px; }
+  .drawer-actions .btn{ flex:1; text-align:center; }
+
+  .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m); padding:14px 22px; font-size:0.88rem; z-index:200; opacity:0; pointer-events:none; transition:all .3s ease; display:flex; align-items:center; gap:10px; box-shadow:0 20px 40px -12px rgba(0,0,0,0.6); }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.success{ border-color:rgba(62,207,114,0.4); }
+  .toast.error{ border-color:rgba(225,38,59,0.5); }
+  .toast .dot2{ width:8px; height:8px; border-radius:50%; background:var(--green); flex-shrink:0; }
+  .toast.error .dot2{ background:var(--red); }
+
+  .spinner{ width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; animation:spin 0.7s linear infinite; display:inline-block; vertical-align:middle; margin-right:8px; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- ============ GATE ============ -->
+<div class="gate" id="gateScreen">
+  <div class="gate-card">
+    <div class="gate-logo"><span class="dot"></span>ASSETTOCARS — ADMIN</div>
+    <div class="gate-sub">Панель управления каталогом модов</div>
+
+    <div class="field">
+      <label>Пароль</label>
+      <input type="password" id="passInput" placeholder="••••••••" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>GitHub Personal Access Token</label>
+      <input type="password" id="tokenInput" placeholder="ghp_..." autocomplete="off">
+      <div class="field-hint">Нужен scope <code>repo</code>. Токен не сохраняется на диске — только в памяти вкладки на время сессии.</div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Владелец репозитория</label>
+        <input type="text" id="ownerInput" value="MatevosyanGevorg">
+      </div>
+      <div class="field">
+        <label>Репозиторий</label>
+        <input type="text" id="repoInput" value="assettocars">
+      </div>
+    </div>
+
+    <button class="btn-primary" id="unlockBtn">Войти в панель</button>
+    <div class="gate-error" id="gateError"></div>
+
+    <div class="gate-note">
+      Это не серверная авторизация — статический сайт не может проверить личность на бэкенде. Пароль лишь отсекает случайных посетителей. Настоящая защита — GitHub-токен с правом записи, который есть только у тебя. Не публикуй ссылку на эту страницу и не делись токеном.
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="app" id="appShell">
+  <header>
+    <div class="nav">
+      <div class="logo"><span class="dot"></span>ASSETTOCARS<span class="tag">ADMIN</span></div>
+      <div class="nav-right">
+        <div class="nav-status"><b id="carCount">0</b> модов в каталоге</div>
+        <button class="btn-logout" id="logoutBtn">Выйти</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="toolbar">
+      <h1>Каталог модов</h1>
+      <div class="toolbar-actions">
+        <input type="text" class="btn-search" id="adminSearch" placeholder="Поиск по названию или марке...">
+        <button class="btn" id="addCarBtn">+ Добавить мод</button>
+      </div>
+    </div>
+
+    <div class="dirty-banner" id="dirtyBanner">
+      <span>Есть несохранённые изменения — <b>они видны только тебе в этой сессии</b>, пока не нажмёшь «Опубликовать».</span>
+      <button class="btn btn-accent" id="publishBtn">Опубликовать на сайт</button>
+    </div>
+
+    <table id="carsTable">
+      <thead>
+        <tr>
+          <th style="width:38%">Мод</th>
+          <th>Дисциплина</th>
+          <th>Привод</th>
+          <th>Л.с.</th>
+          <th>Версия</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="carsTableBody"></tbody>
+    </table>
+    <div class="empty" id="adminEmpty" style="display:none;">Ничего не найдено по этому запросу.</div>
+  </div>
+</div>
+
+<!-- ============ EDIT DRAWER ============ -->
+<div class="drawer-overlay" id="drawerOverlay">
+  <div class="drawer">
+    <div class="drawer-top">
+      <h3 id="drawerTitle">Новый мод</h3>
+      <button class="drawer-close" id="drawerClose">✕</button>
+    </div>
+    <div class="drawer-body">
+      <form id="carForm">
+        <div class="form-row">
+          <label>Название мода</label>
+          <input type="text" id="f_name" required placeholder="Silvia S15 — Touge Spec">
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Марка</label>
+            <input type="text" id="f_brand" required placeholder="Nissan">
+          </div>
+          <div class="form-row">
+            <label>Автор мода</label>
+            <input type="text" id="f_author" placeholder="kanjo_labs">
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Дисциплина</label>
+            <select id="f_category">
+              <option value="drift">Дрифт</option>
+              <option value="road">Дорога</option>
+              <option value="track">Трасса</option>
+              <option value="drag">Драг</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Привод</label>
+            <select id="f_drivetrain">
+              <option value="RWD">RWD</option>
+              <option value="FWD">FWD</option>
+              <option value="AWD">AWD</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row"><label>Мощность, л.с.</label><input type="number" id="f_hp" required min="1"></div>
+          <div class="form-row"><label>Крутящий момент, Нм</label><input type="number" id="f_torque" required min="1"></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row"><label>Вес, кг</label><input type="number" id="f_weight" required min="1"></div>
+          <div class="form-row"><label>Макс. скорость, км/ч</label><input type="number" id="f_topSpeed" required min="1"></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row"><label>0–100, с</label><input type="number" id="f_zeroHundred" step="0.1" required min="0"></div>
+          <div class="form-row"><label>Цена, кредиты</label><input type="number" id="f_price" required min="0"></div>
+        </div>
+        <div class="form-row">
+          <label>Версия</label>
+          <input type="text" id="f_version" placeholder="1.0">
+        </div>
+        <div class="form-row">
+          <label>Описание</label>
+          <textarea id="f_desc" placeholder="Короткое описание сборки — что переделано и под что заточен мод."></textarea>
+        </div>
+        <div class="form-row">
+          <label>Ссылка на изображение (необязательно)</label>
+          <input type="url" id="f_image" placeholder="https://...">
+          <div class="form-hint">Если оставить пустым — на карточке будет схематичная иконка машины в цвете дисциплины.</div>
+          <div class="img-preview" id="imgPreview"></div>
+        </div>
+
+        <div class="drawer-actions">
+          <button type="button" class="btn" id="cancelEditBtn">Отмена</button>
+          <button type="submit" class="btn btn-accent" id="saveCarBtn">Сохранить в списке</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot2"></span><span id="toastText"></span></div>
+
+<script>
+const CATEGORY_META = {
+  drift:{label:"Дрифт", color:"#e1263b"},
+  road:{label:"Дорога", color:"#4c8dff"},
+  track:{label:"Трасса", color:"#2fd3c7"},
+  drag:{label:"Драг", color:"#f2a93b"},
+};
+
+let session = null;      // { owner, repo, token }
+let cars = [];           // working copy (in-memory, edited by admin)
+let fileSha = null;      // current sha of data/cars.json on GitHub, needed to publish
+let editingId = null;    // id of the car currently open in the drawer, or null = new
+let isDirty = false;
+
+/* ---------------- HELPERS ---------------- */
+function carSvg(color){
+  return `<svg viewBox="0 0 600 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M40 190 C40 150, 80 140, 120 132 L165 90 C180 76, 205 68, 232 68 L400 68 C424 68, 446 76, 462 92 L500 132 C540 138, 566 152, 566 190 L566 200 L40 200 Z" stroke="${color}" stroke-width="3"/>
+    <circle cx="150" cy="196" r="34" stroke="${color}" stroke-width="3"/>
+    <circle cx="456" cy="196" r="34" stroke="${color}" stroke-width="3"/>
+  </svg>`;
+}
+function b64EncodeUnicode(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64DecodeUnicode(str){ return decodeURIComponent(escape(atob(str))); }
+
+function showToast(msg, type='success'){
+  const t = document.getElementById('toast');
+  document.getElementById('toastText').textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(()=> t.className = 'toast ' + type, 3200);
+}
+function setDirty(v){
+  isDirty = v;
+  document.getElementById('dirtyBanner').style.display = v ? 'flex' : 'none';
+}
+
+/* ---------------- GITHUB API ---------------- */
+const API = 'https://api.github.com';
+function ghHeaders(token){
+  return { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' };
+}
+
+async function loadCarsFromGitHub(){
+  const { owner, repo, token } = session;
+  const res = await fetch(`${API}/repos/${owner}/${repo}/contents/data/cars.json`, { headers: ghHeaders(token) });
+  if(!res.ok){
+    if(res.status === 404) throw new Error('Файл data/cars.json не найден в репозитории.');
+    if(res.status === 401) throw new Error('Токен недействителен или истёк.');
+    if(res.status === 403) throw new Error('Нет доступа — проверь права токена (нужен scope repo).');
+    throw new Error('GitHub ответил ошибкой ' + res.status);
+  }
+  const data = await res.json();
+  fileSha = data.sha;
+  return JSON.parse(b64DecodeUnicode(data.content));
+}
+
+async function publishCarsToGitHub(){
+  const { owner, repo, token } = session;
+  const content = b64EncodeUnicode(JSON.stringify(cars, null, 2));
+  const res = await fetch(`${API}/repos/${owner}/${repo}/contents/data/cars.json`, {
+    method:'PUT',
+    headers: { ...ghHeaders(token), 'Content-Type':'application/json' },
+    body: JSON.stringify({
+      message: `Обновление каталога модов (${cars.length} машин) — из админ-панели`,
+      content,
+      sha: fileSha,
+      branch: 'main',
+    }),
+  });
+  if(!res.ok){
+    const err = await res.json().catch(()=>({}));
+    throw new Error(err.message || ('GitHub ответил ошибкой ' + res.status));
+  }
+  const data = await res.json();
+  fileSha = data.content.sha;
+}
+
+/* ---------------- GATE ---------------- */
+const ADMIN_PASSPHRASE = 'assettocars2026';
+
+document.getElementById('unlockBtn').addEventListener('click', async ()=>{
+  const pass = document.getElementById('passInput').value;
+  const token = document.getElementById('tokenInput').value.trim();
+  const owner = document.getElementById('ownerInput').value.trim();
+  const repo = document.getElementById('repoInput').value.trim();
+  const errEl = document.getElementById('gateError');
+  errEl.style.display = 'none';
+
+  if(pass !== ADMIN_PASSPHRASE){
+    errEl.textContent = 'Неверный пароль.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if(!token || !owner || !repo){
+    errEl.textContent = 'Заполни токен, владельца и название репозитория.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('unlockBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Проверка доступа...';
+
+  session = { owner, repo, token };
+  try{
+    cars = await loadCarsFromGitHub();
+    sessionStorage.setItem('ac_admin_session', JSON.stringify(session));
+    document.getElementById('gateScreen').style.display = 'none';
+    document.getElementById('appShell').style.display = 'block';
+    renderTable();
+  } catch(err){
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+    session = null;
+  } finally{
+    btn.disabled = false;
+    btn.textContent = 'Войти в панель';
+  }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', ()=>{
+  if(isDirty && !confirm('Есть неопубликованные изменения — они будут потеряны. Выйти?')) return;
+  sessionStorage.removeItem('ac_admin_session');
+  location.reload();
+});
+
+// Restore a session within the same tab (token stays in sessionStorage only, cleared on tab close)
+(async function tryRestoreSession(){
+  const raw = sessionStorage.getItem('ac_admin_session');
+  if(!raw) return;
+  try{
+    session = JSON.parse(raw);
+    cars = await loadCarsFromGitHub();
+    document.getElementById('gateScreen').style.display = 'none';
+    document.getElementById('appShell').style.display = 'block';
+    renderTable();
+  } catch(err){
+    sessionStorage.removeItem('ac_admin_session');
+    session = null;
+  }
+})();
+
+/* ---------------- TABLE ---------------- */
+function renderTable(){
+  const q = document.getElementById('adminSearch').value.trim().toLowerCase();
+  const tbody = document.getElementById('carsTableBody');
+  const filtered = cars.filter(c => !q || c.name.toLowerCase().includes(q) || c.brand.toLowerCase().includes(q));
+
+  document.getElementById('carCount').textContent = cars.length;
+  document.getElementById('adminEmpty').style.display = filtered.length ? 'none' : 'block';
+  document.getElementById('carsTable').style.display = filtered.length ? 'table' : 'none';
+
+  tbody.innerHTML = filtered.map(c=>{
+    const meta = CATEGORY_META[c.category] || CATEGORY_META.road;
+    const icon = c.image
+      ? `<img src="${c.image}" alt="">`
+      : carSvg(meta.color);
+    return `
+      <tr data-id="${c.id}">
+        <td>
+          <div class="cell-car">
+            <div class="cell-icon">${icon}</div>
+            <div>
+              <div class="cell-name">${c.name}</div>
+              <div class="cell-brand">${c.brand}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="badge" style="background:color-mix(in srgb, ${meta.color} 20%, #0d0d10); color:${meta.color}; border:1px solid color-mix(in srgb, ${meta.color} 45%, transparent);">${meta.label}</span></td>
+        <td>${c.drivetrain}</td>
+        <td>${c.hp}</td>
+        <td>${c.version || '—'}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn" data-action="edit" title="Редактировать">✎</button>
+            <button class="icon-btn danger" data-action="delete" title="Удалить">🗑</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('tr').forEach(row=>{
+    const id = parseInt(row.dataset.id);
+    row.querySelector('[data-action="edit"]').addEventListener('click', ()=>openDrawer(id));
+    row.querySelector('[data-action="delete"]').addEventListener('click', ()=>deleteCar(id));
+  });
+}
+document.getElementById('adminSearch').addEventListener('input', renderTable);
+
+function deleteCar(id){
+  const car = cars.find(c=>c.id===id);
+  if(!car) return;
+  if(!confirm(`Удалить «${car.name}» из каталога?`)) return;
+  cars = cars.filter(c=>c.id!==id);
+  setDirty(true);
+  renderTable();
+}
+
+/* ---------------- DRAWER (add/edit form) ---------------- */
+const drawerOverlay = document.getElementById('drawerOverlay');
+const carForm = document.getElementById('carForm');
+
+function openDrawer(id){
+  editingId = id ?? null;
+  const car = id ? cars.find(c=>c.id===id) : null;
+
+  document.getElementById('drawerTitle').textContent = car ? 'Редактировать мод' : 'Новый мод';
+  document.getElementById('f_name').value = car?.name || '';
+  document.getElementById('f_brand').value = car?.brand || '';
+  document.getElementById('f_author').value = car?.author || '';
+  document.getElementById('f_category').value = car?.category || 'road';
+  document.getElementById('f_drivetrain').value = car?.drivetrain || 'RWD';
+  document.getElementById('f_hp').value = car?.hp ?? '';
+  document.getElementById('f_torque').value = car?.torque ?? '';
+  document.getElementById('f_weight').value = car?.weight ?? '';
+  document.getElementById('f_topSpeed').value = car?.topSpeed ?? '';
+  document.getElementById('f_zeroHundred').value = car?.zeroHundred ?? '';
+  document.getElementById('f_price').value = car?.price ?? '';
+  document.getElementById('f_version').value = car?.version || '1.0';
+  document.getElementById('f_desc').value = car?.desc || '';
+  document.getElementById('f_image').value = car?.image || '';
+  updateImgPreview();
+
+  drawerOverlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer(){
+  drawerOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('addCarBtn').addEventListener('click', ()=>openDrawer(null));
+document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+document.getElementById('cancelEditBtn').addEventListener('click', closeDrawer);
+drawerOverlay.addEventListener('click', e=>{ if(e.target===drawerOverlay) closeDrawer(); });
+
+function updateImgPreview(){
+  const url = document.getElementById('f_image').value.trim();
+  const meta = CATEGORY_META[document.getElementById('f_category').value] || CATEGORY_META.road;
+  const preview = document.getElementById('imgPreview');
+  preview.innerHTML = url ? `<img src="${url}" onerror="this.parentElement.innerHTML=''">` : carSvg(meta.color);
+}
+document.getElementById('f_image').addEventListener('input', updateImgPreview);
+document.getElementById('f_category').addEventListener('change', updateImgPreview);
+
+carForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const payload = {
+    id: editingId ?? (Math.max(0, ...cars.map(c=>c.id)) + 1),
+    name: document.getElementById('f_name').value.trim(),
+    brand: document.getElementById('f_brand').value.trim(),
+    category: document.getElementById('f_category').value,
+    drivetrain: document.getElementById('f_drivetrain').value,
+    hp: Number(document.getElementById('f_hp').value),
+    torque: Number(document.getElementById('f_torque').value),
+    weight: Number(document.getElementById('f_weight').value),
+    zeroHundred: Number(document.getElementById('f_zeroHundred').value),
+    topSpeed: Number(document.getElementById('f_topSpeed').value),
+    price: Number(document.getElementById('f_price').value),
+    author: document.getElementById('f_author').value.trim(),
+    version: document.getElementById('f_version').value.trim(),
+    desc: document.getElementById('f_desc').value.trim(),
+  };
+  const imgUrl = document.getElementById('f_image').value.trim();
+  if(imgUrl) payload.image = imgUrl;
+
+  if(editingId){
+    cars = cars.map(c => c.id === editingId ? payload : c);
+  } else {
+    cars.push(payload);
+  }
+  setDirty(true);
+  closeDrawer();
+  renderTable();
+  showToast(editingId ? 'Мод обновлён в списке (пока не опубликован)' : 'Мод добавлен в список (пока не опубликован)');
+});
+
+/* ---------------- PUBLISH ---------------- */
+document.getElementById('publishBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('publishBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Публикация...';
+  try{
+    await publishCarsToGitHub();
+    setDirty(false);
+    showToast('Опубликовано! Сайт обновится в течение минуты.', 'success');
+  } catch(err){
+    showToast('Ошибка публикации: ' + err.message, 'error');
+  } finally{
+    btn.disabled = false;
+    btn.textContent = 'Опубликовать на сайт';
+  }
+});
+
+window.addEventListener('beforeunload', e=>{
+  if(isDirty){ e.preventDefault(); e.returnValue=''; }
+});
+</script>
+</body>
+</html>
