@@ -895,7 +895,9 @@ function openDetail(c){
       <div class="meta-item"><div class="k">Цена</div><div class="v">${c.price} кредитов</div></div>
     </div>
     <div class="overlay-actions">
-      <a href="#" class="btn-primary">Скачать мод</a>
+      ${c.downloadUrl
+        ? `<a href="${c.downloadUrl}" class="btn-primary" download>Скачать мод</a>`
+        : `<span class="btn-primary" style="opacity:0.5; cursor:default;" title="Файл ещё не загружен">Скоро в загрузке</span>`}
       <a href="#install" class="btn-ghost">Инструкция по установке</a>
     </div>
   `;

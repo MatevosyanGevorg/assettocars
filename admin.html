@@ -83,9 +83,10 @@
   .cell-brand{ color:var(--text-faint); font-size:0.78rem; }
   .badge{ display:inline-block; font-size:0.72rem; font-weight:600; padding:4px 9px; border-radius:999px; }
   .row-actions{ display:flex; gap:8px; justify-content:flex-end; }
-  .icon-btn{ width:32px; height:32px; border-radius:7px; border:1px solid var(--line); background:var(--bg-alt); color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s ease; }
-  .icon-btn:hover{ color:var(--text); border-color:var(--text-faint); }
-  .icon-btn.danger:hover{ color:var(--red); border-color:var(--red-dim); }
+  .icon-btn{ width:38px; height:38px; border-radius:8px; border:1px solid var(--line); background:var(--bg-alt); color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s ease; }
+  .icon-btn svg{ width:18px; height:18px; }
+  .icon-btn:hover{ color:var(--blue); border-color:var(--blue); background:color-mix(in srgb, var(--blue) 10%, var(--bg-alt)); }
+  .icon-btn.danger:hover{ color:var(--red); border-color:var(--red-dim); background:color-mix(in srgb, var(--red) 10%, var(--bg-alt)); }
 
   .empty{ text-align:center; padding:60px 20px; color:var(--text-dim); }
 
@@ -111,6 +112,75 @@
   .img-preview{ margin-top:10px; width:100%; height:120px; border-radius:var(--radius-s); border:1px solid var(--line); background:var(--surface); display:flex; align-items:center; justify-content:center; overflow:hidden; }
   .img-preview img{ width:100%; height:100%; object-fit:cover; }
   .img-preview svg{ width:40%; opacity:0.6; }
+
+  /* ---------- image dropzone trigger ---------- */
+  .photo-field{ position:relative; margin-top:10px; width:100%; height:150px; border-radius:var(--radius-m); border:1.5px dashed var(--line); background:var(--surface); cursor:pointer; overflow:hidden; transition:border-color .18s ease; }
+  .photo-field:hover{ border-color:var(--red); }
+  .photo-field .pf-media{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .photo-field .pf-media img{ width:100%; height:100%; object-fit:cover; }
+  .photo-field .pf-media svg.car-icon{ width:38%; opacity:0.55; }
+  .photo-field .pf-overlay{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+    background:rgba(10,10,12,0.72); opacity:0; transition:opacity .18s ease; color:var(--text); text-align:center; padding:10px;
+  }
+  .photo-field:hover .pf-overlay{ opacity:1; }
+  .photo-field .pf-overlay svg{ width:26px; height:26px; color:var(--red); }
+  .photo-field .pf-overlay span{ font-size:0.85rem; font-weight:600; }
+  .photo-field .pf-overlay small{ font-size:0.72rem; color:var(--text-dim); }
+  .photo-field.has-image .pf-overlay small{ color:var(--text-dim); }
+  .photo-manual{ margin-top:10px; }
+  .photo-manual summary{ font-size:0.78rem; color:var(--text-faint); cursor:pointer; user-select:none; }
+  .photo-manual summary:hover{ color:var(--text-dim); }
+  .photo-manual input{ margin-top:8px; width:100%; padding:10px 12px; border-radius:var(--radius-s); border:1px solid var(--line); background:var(--surface); color:var(--text); font-size:0.85rem; }
+
+  /* ---------- upload modal (shared: photo + mod file) ---------- */
+  .modal-overlay{ position:fixed; inset:0; background:rgba(6,6,7,0.75); backdrop-filter:blur(4px); z-index:300; display:flex; align-items:center; justify-content:center; padding:24px; opacity:0; pointer-events:none; transition:opacity .22s ease; }
+  .modal-overlay.open{ opacity:1; pointer-events:auto; }
+  .modal-box{ width:100%; max-width:480px; background:var(--bg-alt); border:1px solid var(--line); border-radius:var(--radius-m); transform:translateY(14px) scale(0.98); transition:transform .22s cubic-bezier(.2,.7,.2,1); overflow:hidden; }
+  .modal-overlay.open .modal-box{ transform:translateY(0) scale(1); }
+  .modal-top{ padding:20px 24px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
+  .modal-top h3{ font-size:1.1rem; }
+  .modal-close{ width:32px; height:32px; border-radius:50%; border:1px solid var(--line); background:none; color:var(--text-dim); cursor:pointer; }
+  .modal-close:hover{ color:var(--text); border-color:var(--text-faint); }
+  .modal-body{ padding:24px; }
+  .modal-rules{ font-size:0.82rem; color:var(--text-dim); margin-bottom:18px; line-height:1.7; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-s); padding:12px 14px; }
+  .modal-rules b{ color:var(--text); }
+  .dropzone{
+    border:1.5px dashed var(--line); border-radius:var(--radius-m); padding:32px 20px; text-align:center; cursor:pointer;
+    transition:all .18s ease; background:var(--surface);
+  }
+  .dropzone:hover, .dropzone.dragover{ border-color:var(--red); background:color-mix(in srgb, var(--red) 6%, var(--surface)); }
+  .dropzone svg{ width:32px; height:32px; color:var(--text-faint); margin-bottom:10px; }
+  .dropzone .dz-title{ font-size:0.92rem; font-weight:600; margin-bottom:4px; }
+  .dropzone .dz-sub{ font-size:0.78rem; color:var(--text-faint); }
+  .modal-file-preview{ margin-top:16px; display:none; align-items:center; gap:12px; padding:12px 14px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-s); }
+  .modal-file-preview.show{ display:flex; }
+  .modal-file-preview .thumb{ width:44px; height:44px; border-radius:6px; overflow:hidden; background:var(--bg-alt); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .modal-file-preview .thumb img{ width:100%; height:100%; object-fit:cover; }
+  .modal-file-preview .thumb svg{ width:22px; height:22px; color:var(--text-faint); }
+  .modal-file-preview .info{ flex:1; min-width:0; }
+  .modal-file-preview .info .fname{ font-size:0.86rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .modal-file-preview .info .fsize{ font-size:0.76rem; color:var(--text-faint); }
+  .modal-error{ display:none; margin-top:12px; font-size:0.82rem; color:var(--red); }
+  .modal-actions{ display:flex; gap:12px; margin-top:20px; }
+  .modal-actions .btn{ flex:1; text-align:center; }
+
+  /* ---------- mod file field (upload vs link) ---------- */
+  .mode-toggle{ display:flex; gap:8px; margin-bottom:12px; }
+  .mode-toggle button{ flex:1; padding:9px; border-radius:var(--radius-s); border:1px solid var(--line); background:var(--surface); color:var(--text-dim); font-size:0.82rem; font-weight:600; cursor:pointer; transition:all .15s ease; }
+  .mode-toggle button.active{ background:var(--red); border-color:var(--red); color:#fff; }
+  .modfile-upload-box{ display:none; }
+  .modfile-upload-box.active{ display:block; }
+  .modfile-link-box{ display:none; }
+  .modfile-link-box.active{ display:block; }
+  .modfile-attached{ display:none; align-items:center; gap:12px; padding:12px 14px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-s); margin-top:10px; }
+  .modfile-attached.show{ display:flex; }
+  .modfile-attached svg{ width:22px; height:22px; color:var(--green); flex-shrink:0; }
+  .modfile-attached .info{ flex:1; min-width:0; }
+  .modfile-attached .fname{ font-size:0.85rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .modfile-attached .fsize{ font-size:0.75rem; color:var(--text-faint); }
+  .modfile-attached button{ background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:1rem; }
+  .modfile-attached button:hover{ color:var(--red); }
   .drawer-actions{ display:flex; gap:12px; margin-top:8px; }
   .drawer-actions .btn{ flex:1; text-align:center; }
 
@@ -264,14 +334,45 @@
           <input type="text" id="f_version" placeholder="1.0">
         </div>
         <div class="form-row">
-          <label>Описание</label>
-          <textarea id="f_desc" placeholder="Короткое описание сборки — что переделано и под что заточен мод."></textarea>
+          <label>Фото мода (необязательно)</label>
+          <div class="photo-field" id="photoField" tabindex="0" role="button" aria-label="Загрузить фото мода">
+            <div class="pf-media" id="pfMedia"></div>
+            <div class="pf-overlay">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4m0 0L7 9m5-5l5 5"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+              <span>Загрузить фото</span>
+              <small>JPG, PNG, SVG, WEBP — до 8 МБ</small>
+            </div>
+          </div>
+          <details class="photo-manual">
+            <summary>...или вставить ссылку на изображение вручную</summary>
+            <input type="url" id="f_image" placeholder="https://...">
+          </details>
+          <div class="form-hint">Если фото не задано — на карточке будет схематичная иконка машины в цвете дисциплины.</div>
         </div>
+
         <div class="form-row">
-          <label>Ссылка на изображение (необязательно)</label>
-          <input type="url" id="f_image" placeholder="https://...">
-          <div class="form-hint">Если оставить пустым — на карточке будет схематичная иконка машины в цвете дисциплины.</div>
-          <div class="img-preview" id="imgPreview"></div>
+          <label>Файл мода (необязательно)</label>
+          <div class="mode-toggle">
+            <button type="button" class="active" data-mode="upload" id="modeUploadBtn">Загрузить архив</button>
+            <button type="button" data-mode="link" id="modeLinkBtn">Указать ссылку</button>
+          </div>
+          <div class="modfile-upload-box active" id="modfileUploadBox">
+            <div class="dropzone" id="modfileDropzone" tabindex="0" role="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4m0 0L7 9m5-5l5 5"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+              <div class="dz-title">Нажми или перетащи архив мода</div>
+              <div class="dz-sub">ZIP, RAR, 7Z — до 50 МБ</div>
+            </div>
+            <div class="modfile-attached" id="modfileAttached">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+              <div class="info"><div class="fname" id="modfileName"></div><div class="fsize" id="modfileSize"></div></div>
+              <button type="button" id="modfileRemove" title="Убрать файл">✕</button>
+            </div>
+            <input type="file" id="modfileInput" accept=".zip,.rar,.7z" style="display:none;">
+          </div>
+          <div class="modfile-link-box" id="modfileLinkBox">
+            <input type="url" id="f_downloadUrl" placeholder="https://... (внешний хостинг, CDN, диск и т.п.)">
+          </div>
+          <div class="form-hint">Больше 50 МБ? Загрузи архив на свой хостинг/CDN и вставь сюда прямую ссылку на скачивание.</div>
         </div>
 
         <div class="drawer-actions">
@@ -279,6 +380,40 @@
           <button type="submit" class="btn btn-accent" id="saveCarBtn">Сохранить в списке</button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PHOTO UPLOAD MODAL ============ -->
+<div class="modal-overlay" id="photoModalOverlay">
+  <div class="modal-box">
+    <div class="modal-top">
+      <h3>Загрузить фото мода</h3>
+      <button class="modal-close" id="photoModalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-rules">
+        Максимальный размер файла — <b>8 МБ</b>.<br>
+        Поддерживаемые форматы: <b>JPG, JPEG, PNG, SVG, WEBP</b>.
+      </div>
+      <div class="dropzone" id="photoDropzone" tabindex="0" role="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4m0 0L7 9m5-5l5 5"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+        <div class="dz-title">Нажми или перетащи фото сюда</div>
+        <div class="dz-sub">Откроется проводник файлов твоего компьютера</div>
+      </div>
+      <input type="file" id="photoFileInput" accept=".jpg,.jpeg,.png,.svg,.webp,image/jpeg,image/png,image/svg+xml,image/webp" style="display:none;">
+      <div class="modal-file-preview" id="photoFilePreview">
+        <div class="thumb" id="photoFileThumb"></div>
+        <div class="info">
+          <div class="fname" id="photoFileName"></div>
+          <div class="fsize" id="photoFileSize"></div>
+        </div>
+      </div>
+      <div class="modal-error" id="photoModalError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="photoModalCancel">Отмена</button>
+        <button type="button" class="btn btn-accent" id="photoModalConfirm" disabled>Использовать фото</button>
+      </div>
     </div>
   </div>
 </div>
@@ -459,8 +594,12 @@ function renderTable(){
         <td>${c.version || '—'}</td>
         <td>
           <div class="row-actions">
-            <button class="icon-btn" data-action="edit" title="Редактировать">✎</button>
-            <button class="icon-btn danger" data-action="delete" title="Удалить">🗑</button>
+            <button class="icon-btn" data-action="edit" title="Редактировать">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>
+            </button>
+            <button class="icon-btn danger" data-action="delete" title="Удалить">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            </button>
           </div>
         </td>
       </tr>
@@ -507,7 +646,25 @@ function openDrawer(id){
   document.getElementById('f_version').value = car?.version || '1.0';
   document.getElementById('f_desc').value = car?.desc || '';
   document.getElementById('f_image').value = car?.image || '';
-  updateImgPreview();
+  refreshPhotoPreview();
+
+  const dlUrl = car?.downloadUrl || '';
+  document.getElementById('f_downloadUrl').value = dlUrl;
+  if(dlUrl && dlUrl.includes('/data/mods/')){
+    setModFileMode('upload');
+    document.getElementById('modfileDropzone').style.display = 'none';
+    document.getElementById('modfileAttached').classList.add('show');
+    document.getElementById('modfileName').textContent = decodeURIComponent(dlUrl.split('/').pop());
+    document.getElementById('modfileSize').textContent = '';
+  } else if(dlUrl){
+    setModFileMode('link');
+    document.getElementById('modfileDropzone').style.display = 'block';
+    document.getElementById('modfileAttached').classList.remove('show');
+  } else {
+    setModFileMode('upload');
+    document.getElementById('modfileDropzone').style.display = 'block';
+    document.getElementById('modfileAttached').classList.remove('show');
+  }
 
   drawerOverlay.classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -521,14 +678,201 @@ document.getElementById('drawerClose').addEventListener('click', closeDrawer);
 document.getElementById('cancelEditBtn').addEventListener('click', closeDrawer);
 drawerOverlay.addEventListener('click', e=>{ if(e.target===drawerOverlay) closeDrawer(); });
 
-function updateImgPreview(){
+function refreshPhotoPreview(){
   const url = document.getElementById('f_image').value.trim();
   const meta = CATEGORY_META[document.getElementById('f_category').value] || CATEGORY_META.road;
-  const preview = document.getElementById('imgPreview');
-  preview.innerHTML = url ? `<img src="${url}" onerror="this.parentElement.innerHTML=''">` : carSvg(meta.color);
+  const media = document.getElementById('pfMedia');
+  const field = document.getElementById('photoField');
+  if(url){
+    media.innerHTML = `<img src="${url}" onerror="this.parentElement.innerHTML=''">`;
+    field.classList.add('has-image');
+  } else {
+    media.innerHTML = carSvg(meta.color).replace('<svg ', '<svg class="car-icon" ');
+    field.classList.remove('has-image');
+  }
 }
-document.getElementById('f_image').addEventListener('input', updateImgPreview);
-document.getElementById('f_category').addEventListener('change', updateImgPreview);
+document.getElementById('f_image').addEventListener('input', refreshPhotoPreview);
+document.getElementById('f_category').addEventListener('change', refreshPhotoPreview);
+
+/* ---------------- SHARED: upload a file to GitHub, get a permanent raw URL ---------------- */
+function readFileAsBase64(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=> resolve(reader.result.split(',')[1]);
+    reader.onerror = ()=> reject(new Error('Не удалось прочитать файл'));
+    reader.readAsDataURL(file);
+  });
+}
+function sanitizeFilename(name){
+  return name.normalize('NFKD').replace(/[^\w.\-]+/g, '_');
+}
+async function uploadFileToGitHub(file, folder){
+  const { owner, repo, token } = session;
+  const base64 = await readFileAsBase64(file);
+  const path = `${folder}/${Date.now()}-${sanitizeFilename(file.name)}`;
+  const res = await fetch(`${API}/repos/${owner}/${repo}/contents/${path}`, {
+    method:'PUT',
+    headers: { ...ghHeaders(token), 'Content-Type':'application/json' },
+    body: JSON.stringify({
+      message: `Загрузка файла: ${file.name}`,
+      content: base64,
+      branch: 'main',
+    }),
+  });
+  if(!res.ok){
+    const err = await res.json().catch(()=>({}));
+    throw new Error(err.message || ('GitHub ответил ошибкой ' + res.status));
+  }
+  return `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}`;
+}
+
+/* ---------------- PHOTO UPLOAD MODAL ---------------- */
+const photoField = document.getElementById('photoField');
+const photoModalOverlay = document.getElementById('photoModalOverlay');
+const photoDropzone = document.getElementById('photoDropzone');
+const photoFileInput = document.getElementById('photoFileInput');
+const photoFilePreview = document.getElementById('photoFilePreview');
+const photoModalError = document.getElementById('photoModalError');
+const photoModalConfirm = document.getElementById('photoModalConfirm');
+const PHOTO_MAX_BYTES = 8 * 1024 * 1024;
+const PHOTO_EXT = ['jpg','jpeg','png','svg','webp'];
+let pendingPhotoFile = null;
+
+function openPhotoModal(){
+  pendingPhotoFile = null;
+  photoFilePreview.classList.remove('show');
+  photoModalError.style.display = 'none';
+  photoModalConfirm.disabled = true;
+  photoModalConfirm.textContent = 'Использовать фото';
+  photoFileInput.value = '';
+  photoModalOverlay.classList.add('open');
+}
+function closePhotoModal(){ photoModalOverlay.classList.remove('open'); }
+
+photoField.addEventListener('click', openPhotoModal);
+photoField.addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openPhotoModal(); } });
+document.getElementById('photoModalClose').addEventListener('click', closePhotoModal);
+document.getElementById('photoModalCancel').addEventListener('click', closePhotoModal);
+photoModalOverlay.addEventListener('click', e=>{ if(e.target===photoModalOverlay) closePhotoModal(); });
+
+photoDropzone.addEventListener('click', ()=>photoFileInput.click());
+photoDropzone.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); photoFileInput.click(); } });
+photoDropzone.addEventListener('dragover', e=>{ e.preventDefault(); photoDropzone.classList.add('dragover'); });
+photoDropzone.addEventListener('dragleave', ()=> photoDropzone.classList.remove('dragover'));
+photoDropzone.addEventListener('drop', e=>{
+  e.preventDefault(); photoDropzone.classList.remove('dragover');
+  if(e.dataTransfer.files[0]) handlePhotoFile(e.dataTransfer.files[0]);
+});
+photoFileInput.addEventListener('change', ()=>{
+  if(photoFileInput.files[0]) handlePhotoFile(photoFileInput.files[0]);
+});
+
+function handlePhotoFile(file){
+  const ext = file.name.split('.').pop().toLowerCase();
+  photoModalError.style.display = 'none';
+  if(!PHOTO_EXT.includes(ext)){
+    photoModalError.textContent = 'Неподдерживаемый формат. Разрешены: JPG, JPEG, PNG, SVG, WEBP.';
+    photoModalError.style.display = 'block';
+    photoModalConfirm.disabled = true;
+    return;
+  }
+  if(file.size > PHOTO_MAX_BYTES){
+    photoModalError.textContent = `Файл слишком большой (${(file.size/1024/1024).toFixed(1)} МБ). Максимум — 8 МБ.`;
+    photoModalError.style.display = 'block';
+    photoModalConfirm.disabled = true;
+    return;
+  }
+  pendingPhotoFile = file;
+  document.getElementById('photoFileName').textContent = file.name;
+  document.getElementById('photoFileSize').textContent = (file.size/1024/1024).toFixed(2) + ' МБ';
+  const thumb = document.getElementById('photoFileThumb');
+  if(ext === 'svg'){
+    thumb.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16v16H4z"/></svg>`;
+  } else {
+    thumb.innerHTML = `<img src="${URL.createObjectURL(file)}">`;
+  }
+  photoFilePreview.classList.add('show');
+  photoModalConfirm.disabled = false;
+}
+
+photoModalConfirm.addEventListener('click', async ()=>{
+  if(!pendingPhotoFile) return;
+  photoModalConfirm.disabled = true;
+  photoModalConfirm.innerHTML = '<span class="spinner"></span>Загрузка...';
+  try{
+    const url = await uploadFileToGitHub(pendingPhotoFile, 'data/images');
+    document.getElementById('f_image').value = url;
+    refreshPhotoPreview();
+    closePhotoModal();
+    showToast('Фото загружено');
+  } catch(err){
+    photoModalError.textContent = 'Ошибка загрузки: ' + err.message;
+    photoModalError.style.display = 'block';
+  } finally{
+    photoModalConfirm.disabled = false;
+    photoModalConfirm.textContent = 'Использовать фото';
+  }
+});
+
+/* ---------------- MOD FILE FIELD (upload archive OR paste link) ---------------- */
+const modfileDropzone = document.getElementById('modfileDropzone');
+const modfileAttached = document.getElementById('modfileAttached');
+const modfileInput = document.getElementById('modfileInput');
+const MODFILE_MAX_BYTES = 50 * 1024 * 1024;
+const MODFILE_EXT = ['zip','rar','7z'];
+
+function setModFileMode(mode){
+  document.getElementById('modeUploadBtn').classList.toggle('active', mode==='upload');
+  document.getElementById('modeLinkBtn').classList.toggle('active', mode==='link');
+  document.getElementById('modfileUploadBox').classList.toggle('active', mode==='upload');
+  document.getElementById('modfileLinkBox').classList.toggle('active', mode==='link');
+}
+document.getElementById('modeUploadBtn').addEventListener('click', ()=>setModFileMode('upload'));
+document.getElementById('modeLinkBtn').addEventListener('click', ()=>setModFileMode('link'));
+
+modfileDropzone.addEventListener('click', ()=>modfileInput.click());
+modfileDropzone.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); modfileInput.click(); } });
+modfileDropzone.addEventListener('dragover', e=>{ e.preventDefault(); modfileDropzone.classList.add('dragover'); });
+modfileDropzone.addEventListener('dragleave', ()=> modfileDropzone.classList.remove('dragover'));
+modfileDropzone.addEventListener('drop', e=>{
+  e.preventDefault(); modfileDropzone.classList.remove('dragover');
+  if(e.dataTransfer.files[0]) handleModFile(e.dataTransfer.files[0]);
+});
+modfileInput.addEventListener('change', ()=>{
+  if(modfileInput.files[0]) handleModFile(modfileInput.files[0]);
+});
+
+async function handleModFile(file){
+  const ext = file.name.split('.').pop().toLowerCase();
+  if(!MODFILE_EXT.includes(ext)){
+    showToast('Неподдерживаемый формат архива. Разрешены: ZIP, RAR, 7Z.', 'error');
+    return;
+  }
+  if(file.size > MODFILE_MAX_BYTES){
+    showToast(`Файл слишком большой (${(file.size/1024/1024).toFixed(1)} МБ). Максимум для прямой загрузки — 50 МБ, используй ссылку.`, 'error');
+    return;
+  }
+  modfileDropzone.style.display = 'none';
+  modfileAttached.classList.add('show');
+  document.getElementById('modfileName').textContent = file.name + ' — загрузка...';
+  document.getElementById('modfileSize').textContent = (file.size/1024/1024).toFixed(2) + ' МБ';
+  try{
+    const url = await uploadFileToGitHub(file, 'data/mods');
+    document.getElementById('f_downloadUrl').value = url;
+    document.getElementById('modfileName').textContent = file.name;
+    showToast('Файл мода загружен');
+  } catch(err){
+    showToast('Ошибка загрузки файла: ' + err.message, 'error');
+    modfileDropzone.style.display = 'block';
+    modfileAttached.classList.remove('show');
+  }
+}
+document.getElementById('modfileRemove').addEventListener('click', ()=>{
+  document.getElementById('f_downloadUrl').value = '';
+  modfileAttached.classList.remove('show');
+  modfileDropzone.style.display = 'block';
+  modfileInput.value = '';
+});
 
 carForm.addEventListener('submit', e=>{
   e.preventDefault();
@@ -550,6 +894,8 @@ carForm.addEventListener('submit', e=>{
   };
   const imgUrl = document.getElementById('f_image').value.trim();
   if(imgUrl) payload.image = imgUrl;
+  const dlUrl = document.getElementById('f_downloadUrl').value.trim();
+  if(dlUrl) payload.downloadUrl = dlUrl;
 
   if(editingId){
     cars = cars.map(c => c.id === editingId ? payload : c);
