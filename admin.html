@@ -165,6 +165,18 @@
   .modal-actions{ display:flex; gap:12px; margin-top:20px; }
   .modal-actions .btn{ flex:1; text-align:center; }
 
+  /* ---------- confirm modal (delete etc.) ---------- */
+  .confirm-icon{
+    width:52px; height:52px; border-radius:50%; background:color-mix(in srgb, var(--red) 15%, var(--bg-alt));
+    border:1px solid var(--red-dim); display:flex; align-items:center; justify-content:center; margin-bottom:18px;
+  }
+  .confirm-icon svg{ width:24px; height:24px; color:var(--red); }
+  .confirm-title{ font-size:1.15rem; margin-bottom:8px; }
+  .confirm-text{ font-size:0.9rem; color:var(--text-dim); line-height:1.6; }
+  .confirm-text b{ color:var(--text); }
+  .btn-danger{ background:var(--red); border-color:var(--red); color:#fff; }
+  .btn-danger:hover{ box-shadow:0 8px 20px -8px rgba(225,38,59,0.6); }
+
   /* ---------- mod file field (upload vs link) ---------- */
   .mode-toggle{ display:flex; gap:8px; margin-bottom:12px; }
   .mode-toggle button{ flex:1; padding:9px; border-radius:var(--radius-s); border:1px solid var(--line); background:var(--surface); color:var(--text-dim); font-size:0.82rem; font-weight:600; cursor:pointer; transition:all .15s ease; }
@@ -365,7 +377,7 @@
             <div class="dropzone" id="modfileDropzone" tabindex="0" role="button">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4m0 0L7 9m5-5l5 5"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
               <div class="dz-title">Нажми или перетащи архив мода</div>
-              <div class="dz-sub">ZIP, RAR, 7Z — до 50 МБ</div>
+              <div class="dz-sub">ZIP, RAR, 7Z — до 100 МБ</div>
             </div>
             <div class="modfile-attached" id="modfileAttached">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
@@ -377,7 +389,7 @@
           <div class="modfile-link-box" id="modfileLinkBox">
             <input type="url" id="f_downloadUrl" placeholder="https://... (внешний хостинг, CDN, диск и т.п.)">
           </div>
-          <div class="form-hint">Больше 50 МБ? Загрузи архив на свой хостинг/CDN и вставь сюда прямую ссылку на скачивание.</div>
+          <div class="form-hint">Больше 100 МБ? Это жёсткий предел GitHub на один файл — загрузи архив на свой хостинг/CDN (например, если мод весит около 1 ГБ) и вставь сюда прямую ссылку на скачивание.</div>
         </div>
 
         <div class="drawer-actions">
@@ -418,6 +430,23 @@
       <div class="modal-actions">
         <button type="button" class="btn" id="photoModalCancel">Отмена</button>
         <button type="button" class="btn btn-accent" id="photoModalConfirm" disabled>Использовать фото</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CONFIRM MODAL (delete etc.) ============ -->
+<div class="modal-overlay" id="confirmModalOverlay">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-body" style="padding-top:28px;">
+      <div class="confirm-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+      </div>
+      <div class="confirm-title" id="confirmTitle">Удалить мод?</div>
+      <div class="confirm-text" id="confirmText"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="confirmCancelBtn">Отмена</button>
+        <button type="button" class="btn btn-danger" id="confirmOkBtn">Удалить</button>
       </div>
     </div>
   </div>
@@ -545,8 +574,15 @@ document.getElementById('unlockBtn').addEventListener('click', async ()=>{
   }
 });
 
-document.getElementById('logoutBtn').addEventListener('click', ()=>{
-  if(isDirty && !confirm('Есть неопубликованные изменения — они будут потеряны. Выйти?')) return;
+document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+  if(isDirty){
+    const ok = await showConfirm(
+      'Выйти без публикации?',
+      'Есть неопубликованные изменения — при выходе они <b>будут потеряны</b>.',
+      'Выйти'
+    );
+    if(!ok) return;
+  }
   sessionStorage.removeItem('ac_admin_session');
   location.reload();
 });
@@ -619,13 +655,38 @@ function renderTable(){
 }
 document.getElementById('adminSearch').addEventListener('input', renderTable);
 
+/* ---------------- CONFIRM MODAL (reusable) ---------------- */
+const confirmModalOverlay = document.getElementById('confirmModalOverlay');
+let confirmResolver = null;
+
+function showConfirm(title, text, okLabel='Удалить'){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmText').innerHTML = text;
+  document.getElementById('confirmOkBtn').textContent = okLabel;
+  confirmModalOverlay.classList.add('open');
+  return new Promise(resolve=>{ confirmResolver = resolve; });
+}
+function closeConfirm(result){
+  confirmModalOverlay.classList.remove('open');
+  if(confirmResolver){ confirmResolver(result); confirmResolver = null; }
+}
+document.getElementById('confirmOkBtn').addEventListener('click', ()=>closeConfirm(true));
+document.getElementById('confirmCancelBtn').addEventListener('click', ()=>closeConfirm(false));
+confirmModalOverlay.addEventListener('click', e=>{ if(e.target===confirmModalOverlay) closeConfirm(false); });
+
 function deleteCar(id){
   const car = cars.find(c=>c.id===id);
   if(!car) return;
-  if(!confirm(`Удалить «${car.name}» из каталога?`)) return;
-  cars = cars.filter(c=>c.id!==id);
-  setDirty(true);
-  renderTable();
+  showConfirm(
+    'Удалить мод?',
+    `Точно удалить «<b>${car.name}</b>» из каталога? Действие можно отменить, если ещё не нажимал «Опубликовать на сайт».`
+  ).then(ok=>{
+    if(!ok) return;
+    cars = cars.filter(c=>c.id!==id);
+    setDirty(true);
+    renderTable();
+    showToast('Мод удалён из списка (пока не опубликовано)');
+  });
 }
 
 /* ---------------- DRAWER (add/edit form) ---------------- */
@@ -823,7 +884,7 @@ photoModalConfirm.addEventListener('click', async ()=>{
 const modfileDropzone = document.getElementById('modfileDropzone');
 const modfileAttached = document.getElementById('modfileAttached');
 const modfileInput = document.getElementById('modfileInput');
-const MODFILE_MAX_BYTES = 50 * 1024 * 1024;
+const MODFILE_MAX_BYTES = 100 * 1024 * 1024;
 const MODFILE_EXT = ['zip','rar','7z'];
 
 function setModFileMode(mode){
@@ -854,7 +915,7 @@ async function handleModFile(file){
     return;
   }
   if(file.size > MODFILE_MAX_BYTES){
-    showToast(`Файл слишком большой (${(file.size/1024/1024).toFixed(1)} МБ). Максимум для прямой загрузки — 50 МБ, используй ссылку.`, 'error');
+    showToast(`Файл слишком большой (${(file.size/1024/1024).toFixed(1)} МБ). Максимум для прямой загрузки — 100 МБ (предел GitHub), используй ссылку.`, 'error');
     return;
   }
   modfileDropzone.style.display = 'none';
