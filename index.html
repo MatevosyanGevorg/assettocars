@@ -1033,7 +1033,8 @@ async function bootstrap(){
   try{
     const res = await fetch('./data/cars.json', {cache:'no-store'});
     if(!res.ok) throw new Error('HTTP ' + res.status);
-    CARS = await res.json();
+    const data = await res.json();
+    CARS = data.filter(c => !c.deleted);
   } catch(err){
     console.error('Не удалось загрузить data/cars.json:', err);
     carGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h4>Не удалось загрузить каталог</h4><p>Похоже, страница открыта напрямую как файл, а не через сервер/GitHub Pages — браузер блокирует загрузку data/cars.json. Открой сайт через GitHub Pages или локальный веб-сервер.</p></div>`;

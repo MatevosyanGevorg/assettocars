@@ -90,11 +90,17 @@
 
   .empty{ text-align:center; padding:60px 20px; color:var(--text-dim); }
 
+  .trash-item{ display:flex; align-items:center; gap:14px; padding:14px; border:1px solid var(--line); border-radius:var(--radius-s); margin-bottom:10px; background:var(--surface); }
+  .trash-item .trash-info{ flex:1; min-width:0; }
+  .trash-item .trash-when{ font-size:0.74rem; color:var(--text-faint); margin-top:2px; }
+
   /* ---------- EDIT DRAWER ---------- */
   .drawer-overlay{ position:fixed; inset:0; background:rgba(6,6,7,0.7); backdrop-filter:blur(4px); z-index:100; display:flex; justify-content:flex-end; opacity:0; pointer-events:none; transition:opacity .25s ease; }
   .drawer-overlay.open{ opacity:1; pointer-events:auto; }
   .drawer{ width:min(560px,100%); height:100%; background:var(--bg-alt); border-left:1px solid var(--line); overflow-y:auto; transform:translateX(30px); transition:transform .3s cubic-bezier(.2,.7,.2,1); }
   .drawer-overlay.open .drawer{ transform:translateX(0); }
+  @keyframes drawerShake{ 0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-8px); } 75%{ transform:translateX(8px); } }
+  .drawer.shake{ animation:drawerShake 0.28s ease; }
   .drawer-top{ position:sticky; top:0; background:var(--bg-alt); z-index:2; padding:22px 28px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
   .drawer-top h3{ font-size:1.2rem; }
   .drawer-close{ width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:none; color:var(--text-dim); cursor:pointer; }
@@ -261,6 +267,10 @@
       <h1>Каталог модов</h1>
       <div class="toolbar-actions">
         <input type="text" class="btn-search" id="adminSearch" placeholder="Поиск по названию или марке...">
+        <button class="btn" id="trashBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:-2px;margin-right:6px;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+          Корзина <span id="trashCount">(0)</span>
+        </button>
         <button class="btn" id="addCarBtn">+ Добавить мод</button>
       </div>
     </div>
@@ -398,6 +408,17 @@
         </div>
       </form>
     </div>
+  </div>
+</div>
+
+<!-- ============ TRASH DRAWER ============ -->
+<div class="drawer-overlay" id="trashDrawerOverlay">
+  <div class="drawer">
+    <div class="drawer-top">
+      <h3>Корзина</h3>
+      <button class="drawer-close" id="trashDrawerClose">✕</button>
+    </div>
+    <div class="drawer-body" id="trashList"></div>
   </div>
 </div>
 
@@ -607,9 +628,11 @@ document.getElementById('logoutBtn').addEventListener('click', async ()=>{
 function renderTable(){
   const q = document.getElementById('adminSearch').value.trim().toLowerCase();
   const tbody = document.getElementById('carsTableBody');
-  const filtered = cars.filter(c => !q || c.name.toLowerCase().includes(q) || c.brand.toLowerCase().includes(q));
+  const active = cars.filter(c => !c.deleted);
+  const filtered = active.filter(c => !q || c.name.toLowerCase().includes(q) || c.brand.toLowerCase().includes(q));
 
-  document.getElementById('carCount').textContent = cars.length;
+  document.getElementById('carCount').textContent = active.length;
+  document.getElementById('trashCount').textContent = `(${cars.filter(c=>c.deleted).length})`;
   document.getElementById('adminEmpty').style.display = filtered.length ? 'none' : 'block';
   document.getElementById('carsTable').style.display = filtered.length ? 'table' : 'none';
 
@@ -679,13 +702,96 @@ function deleteCar(id){
   if(!car) return;
   showConfirm(
     'Удалить мод?',
-    `Точно удалить «<b>${car.name}</b>» из каталога? Действие можно отменить, если ещё не нажимал «Опубликовать на сайт».`
+    `Переместить «<b>${car.name}</b>» в корзину? Оттуда его можно будет восстановить в любой момент.`
+  ).then(ok=>{
+    if(!ok) return;
+    cars = cars.map(c => c.id===id ? { ...c, deleted:true, deletedAt: Date.now() } : c);
+    setDirty(true);
+    renderTable();
+    showToast('Мод перемещён в корзину');
+  });
+}
+
+/* ---------------- TRASH ---------------- */
+const trashDrawerOverlay = document.getElementById('trashDrawerOverlay');
+document.getElementById('trashBtn').addEventListener('click', ()=>{
+  renderTrash();
+  trashDrawerOverlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+});
+document.getElementById('trashDrawerClose').addEventListener('click', closeTrashDrawer);
+trashDrawerOverlay.addEventListener('click', e=>{ if(e.target===trashDrawerOverlay) closeTrashDrawer(); });
+function closeTrashDrawer(){
+  trashDrawerOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function renderTrash(){
+  const deleted = cars.filter(c=>c.deleted).sort((a,b)=>(b.deletedAt||0)-(a.deletedAt||0));
+  const list = document.getElementById('trashList');
+  document.getElementById('trashCount').textContent = `(${deleted.length})`;
+
+  if(!deleted.length){
+    list.innerHTML = `<div class="empty" style="padding:40px 0;">Корзина пуста</div>`;
+    return;
+  }
+  list.innerHTML = deleted.map(c=>{
+    const meta = CATEGORY_META[c.category] || CATEGORY_META.road;
+    const icon = c.image ? `<img src="${c.image}" alt="">` : carSvg(meta.color);
+    const when = c.deletedAt ? new Date(c.deletedAt).toLocaleString('ru-RU', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : '';
+    return `
+      <div class="trash-item" data-id="${c.id}">
+        <div class="cell-icon">${icon}</div>
+        <div class="trash-info">
+          <div class="cell-name">${c.name}</div>
+          <div class="cell-brand">${c.brand}</div>
+          <div class="trash-when">Удалён: ${when}</div>
+        </div>
+        <div class="row-actions">
+          <button class="icon-btn" data-action="restore" title="Восстановить">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          </button>
+          <button class="icon-btn danger" data-action="purge" title="Удалить навсегда">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('.trash-item').forEach(row=>{
+    const id = parseInt(row.dataset.id);
+    row.querySelector('[data-action="restore"]').addEventListener('click', ()=>restoreCar(id));
+    row.querySelector('[data-action="purge"]').addEventListener('click', ()=>purgeCar(id));
+  });
+}
+
+function restoreCar(id){
+  cars = cars.map(c=>{
+    if(c.id!==id) return c;
+    const { deleted, deletedAt, ...rest } = c;
+    return rest;
+  });
+  setDirty(true);
+  renderTrash();
+  renderTable();
+  showToast('Мод восстановлен из корзины');
+}
+
+function purgeCar(id){
+  const car = cars.find(c=>c.id===id);
+  if(!car) return;
+  showConfirm(
+    'Удалить навсегда?',
+    `«<b>${car.name}</b>» будет удалён без возможности восстановления. Это действие нельзя отменить.`,
+    'Удалить навсегда'
   ).then(ok=>{
     if(!ok) return;
     cars = cars.filter(c=>c.id!==id);
     setDirty(true);
+    renderTrash();
     renderTable();
-    showToast('Мод удалён из списка (пока не опубликовано)');
+    showToast('Мод удалён навсегда');
   });
 }
 
@@ -742,7 +848,14 @@ function closeDrawer(){
 document.getElementById('addCarBtn').addEventListener('click', ()=>openDrawer(null));
 document.getElementById('drawerClose').addEventListener('click', closeDrawer);
 document.getElementById('cancelEditBtn').addEventListener('click', closeDrawer);
-drawerOverlay.addEventListener('click', e=>{ if(e.target===drawerOverlay) closeDrawer(); });
+drawerOverlay.addEventListener('click', e=>{
+  if(e.target===drawerOverlay){
+    const panel = drawerOverlay.querySelector('.drawer');
+    panel.classList.remove('shake');
+    void panel.offsetWidth; // restart animation if clicked again quickly
+    panel.classList.add('shake');
+  }
+});
 
 function refreshPhotoPreview(){
   const url = document.getElementById('f_image').value.trim();
