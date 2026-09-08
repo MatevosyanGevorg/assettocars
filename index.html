@@ -1031,7 +1031,7 @@ document.getElementById('hero').addEventListener('mousemove', e=>{
 /* ---------------- LOAD DATA + BOOTSTRAP ---------------- */
 async function bootstrap(){
   try{
-    const res = await fetch('./data/cars.json', {cache:'no-store'});
+    const res = await fetch('./data/cars.json?v=' + Date.now(), {cache:'no-store'});
     if(!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     CARS = data.filter(c => !c.deleted);
