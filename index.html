@@ -343,6 +343,7 @@
   }
   .card.in-view{ opacity:1; transform:translateY(0); }
   .card:hover{ transform:translateY(-6px); border-color:var(--card-accent, var(--red)); box-shadow:0 20px 40px -18px var(--card-accent, rgba(225,38,59,0.5)); }
+  .card-filler{ visibility:hidden; pointer-events:none; opacity:0 !important; transform:none !important; transition:none !important; }
   .card-media{
     position:relative; height:168px; display:flex; align-items:center; justify-content:center;
     background:
@@ -905,6 +906,31 @@ function render(){
     carGrid.appendChild(card);
     cardObserver.observe(card);
   });
+
+  // Keep the grid's height constant across pages: a short last page (e.g. 3 cards
+  // instead of 9) would shrink the document, and the browser clamps scroll position
+  // to fit — which feels like the page "jumping up" when switching pages. Reserving
+  // the full page height with invisible filler slots prevents that.
+  if(totalPages > 1 && pageCars.length < PAGE_SIZE){
+    for(let i = 0; i < PAGE_SIZE - pageCars.length; i++){
+      const filler = document.createElement('div');
+      filler.className = 'card card-filler';
+      filler.setAttribute('aria-hidden', 'true');
+      filler.innerHTML = `
+        <div class="card-media"></div>
+        <div class="card-body">
+          <div class="card-brand">&nbsp;</div>
+          <div class="card-name">&nbsp;</div>
+          <div class="card-specs">
+            <div>&nbsp;<b>&nbsp;</b></div>
+            <div>&nbsp;<b>&nbsp;</b></div>
+            <div>&nbsp;<b>&nbsp;</b></div>
+          </div>
+        </div>
+      `;
+      carGrid.appendChild(filler);
+    }
+  }
 
   renderPagination(totalPages);
 }
