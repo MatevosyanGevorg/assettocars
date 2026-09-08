@@ -83,6 +83,52 @@
   .navlinks{ display:flex; }
   @media(max-width:860px){ .navlinks{display:none;} }
 
+  /* ---------- NAV AUTH ---------- */
+  .nav-auth{ display:flex; align-items:center; gap:12px; }
+  @media(max-width:600px){ .nav-auth .nav-cta{ display:none; } }
+  .nav-login-btn{
+    padding:11px 20px; border-radius:999px; border:1px solid var(--line); background:none; color:var(--text);
+    font-weight:600; font-size:0.9rem; cursor:pointer; transition:all .2s ease;
+  }
+  .nav-login-btn:hover{ border-color:var(--text-faint); background:var(--surface); }
+  .user-chip{ display:none; align-items:center; gap:10px; padding:6px 8px 6px 6px; border-radius:999px; border:1px solid var(--line); background:var(--surface); cursor:pointer; position:relative; }
+  .user-chip img{ width:30px; height:30px; border-radius:50%; object-fit:cover; }
+  .user-chip .uname{ font-size:0.85rem; font-weight:600; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .user-menu{
+    position:absolute; top:calc(100% + 8px); right:0; min-width:180px; background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--radius-m); padding:8px; box-shadow:0 20px 40px -12px rgba(0,0,0,0.6);
+    opacity:0; transform:translateY(-6px); pointer-events:none; transition:all .18s ease;
+  }
+  .user-chip.open .user-menu{ opacity:1; transform:translateY(0); pointer-events:auto; }
+  .user-menu button{ width:100%; text-align:left; padding:10px 12px; border-radius:var(--radius-s); background:none; border:none; color:var(--text-dim); font-size:0.86rem; cursor:pointer; }
+  .user-menu button:hover{ background:var(--bg-alt); color:var(--text); }
+
+  /* ---------- LOGIN MODAL ---------- */
+  .auth-modal-overlay{
+    position:fixed; inset:0; z-index:400; background:rgba(6,6,7,0.75); backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+    opacity:0; pointer-events:none; transition:opacity .25s ease;
+  }
+  .auth-modal-overlay.open{ opacity:1; pointer-events:auto; }
+  .auth-modal-box{
+    width:100%; max-width:400px; background:var(--bg-alt); border:1px solid var(--line); border-radius:var(--radius-m);
+    padding:36px 32px; text-align:center; transform:translateY(14px) scale(0.98); transition:transform .25s cubic-bezier(.2,.7,.2,1);
+  }
+  .auth-modal-overlay.open .auth-modal-box{ transform:translateY(0) scale(1); }
+  .auth-modal-close{ position:absolute; top:18px; right:18px; width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:none; color:var(--text-dim); cursor:pointer; }
+  .auth-modal-close:hover{ color:var(--text); border-color:var(--text-faint); }
+  .auth-modal-box h3{ font-size:1.35rem; margin-bottom:8px; }
+  .auth-modal-box p{ color:var(--text-dim); font-size:0.9rem; margin-bottom:28px; line-height:1.6; }
+  .auth-provider-btn{
+    width:100%; display:flex; align-items:center; justify-content:center; gap:12px;
+    padding:13px; border-radius:var(--radius-s); border:1px solid var(--line); background:var(--surface); color:var(--text);
+    font-weight:600; font-size:0.92rem; cursor:pointer; transition:all .18s ease; margin-bottom:12px;
+  }
+  .auth-provider-btn:hover{ border-color:var(--text-faint); transform:translateY(-1px); }
+  .auth-provider-btn svg{ width:20px; height:20px; flex-shrink:0; }
+  .auth-modal-error{ display:none; margin-top:14px; font-size:0.82rem; color:var(--red); }
+  .auth-modal-note{ margin-top:22px; font-size:0.76rem; color:var(--text-faint); line-height:1.6; }
+
   /* ---------- HERO ---------- */
   .hero{
     position:relative; min-height:100vh; display:flex; align-items:center;
@@ -457,7 +503,17 @@
       <a href="#install">Установка</a>
       <a href="#creator">Для моддеров</a>
     </nav>
-    <a href="#garage" class="nav-cta">В гараж</a>
+    <div class="nav-auth" id="navAuth">
+      <a href="#garage" class="nav-cta">В гараж</a>
+      <button class="nav-login-btn" id="navLoginBtn">Войти</button>
+      <div class="user-chip" id="userChip">
+        <img id="userChipAvatar" src="" alt="">
+        <span class="uname" id="userChipName"></span>
+        <div class="user-menu">
+          <button type="button" id="userLogoutBtn">Выйти</button>
+        </div>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -652,6 +708,24 @@
     </div>
   </div>
 </footer>
+
+<div class="auth-modal-overlay" id="authModalOverlay">
+  <div class="auth-modal-box" style="position:relative;">
+    <button class="auth-modal-close" id="authModalClose">✕</button>
+    <h3>Войди, чтобы скачать мод</h3>
+    <p>Регистрация не нужна отдельно — просто войди через свой аккаунт, и скачивание начнётся сразу.</p>
+    <button class="auth-provider-btn" id="googleLoginBtn">
+      <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.67-.22-2.45H12v4.63h6.47a5.53 5.53 0 01-2.4 3.63v3h3.87c2.27-2.09 3.58-5.17 3.58-8.81z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.07 7.93-2.92l-3.87-3c-1.07.72-2.45 1.15-4.06 1.15-3.12 0-5.77-2.11-6.71-4.94H1.3v3.1A12 12 0 0012 24z"/><path fill="#FBBC05" d="M5.29 14.29a7.2 7.2 0 010-4.58v-3.1H1.3a12 12 0 000 10.78l3.99-3.1z"/><path fill="#EA4335" d="M12 4.75c1.76 0 3.35.61 4.6 1.8l3.44-3.44C17.94 1.19 15.24 0 12 0A12 12 0 001.3 6.61l3.99 3.1C6.23 6.86 8.88 4.75 12 4.75z"/></svg>
+      Войти через Google
+    </button>
+    <button class="auth-provider-btn" id="githubLoginBtn">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.66.5 12.03c0 5.09 3.29 9.4 7.86 10.93.57.1.78-.25.78-.55v-2.15c-3.2.7-3.87-1.36-3.87-1.36-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 015.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.6.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.39-5.25 5.67.41.36.78 1.08.78 2.17v3.21c0 .31.21.66.79.55A10.53 10.53 0 0023.5 12.03C23.5 5.66 18.35.5 12 .5z"/></svg>
+      Войти через GitHub
+    </button>
+    <div class="auth-modal-error" id="authModalError"></div>
+    <div class="auth-modal-note">Вход нужен только для скачивания модов — просмотр каталога и характеристик доступен всем.</div>
+  </div>
+</div>
 
 <div class="overlay" id="detailOverlay">
   <div class="overlay-panel">
@@ -896,7 +970,7 @@ function openDetail(c){
     </div>
     <div class="overlay-actions">
       ${c.downloadUrl
-        ? `<a href="${c.downloadUrl}" class="btn-primary" download>Скачать мод</a>`
+        ? `<button type="button" class="btn-primary" id="downloadModBtn" data-url="${c.downloadUrl}">Скачать мод</button>`
         : `<span class="btn-primary" style="opacity:0.5; cursor:default;" title="Файл ещё не загружен">Скоро в загрузке</span>`}
       <a href="#install" class="btn-ghost">Инструкция по установке</a>
     </div>
@@ -908,6 +982,14 @@ function openDetail(c){
   document.querySelectorAll('#barsHost .spec-fill').forEach(el=>{
     el.style.background = meta.color;
   });
+  const downloadBtn = document.getElementById('downloadModBtn');
+  if(downloadBtn){
+    downloadBtn.addEventListener('click', ()=>{
+      const url = downloadBtn.dataset.url;
+      if(window.acRequireAuth) window.acRequireAuth(url);
+      else window.open(url, '_blank');
+    });
+  }
 
   overlay.classList.add('open');
   document.body.style.overflow='hidden';
@@ -1046,6 +1128,105 @@ async function bootstrap(){
   render();
 }
 bootstrap();
+</script>
+
+<!-- ============ AUTH (Firebase) ============ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import {
+    getAuth, GoogleAuthProvider, GithubAuthProvider,
+    signInWithPopup, signOut, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+
+  // ЗАПОЛНИ ЭТИМИ ДАННЫМИ ИЗ FIREBASE CONSOLE (Project settings → General → Your apps → SDK setup and configuration)
+  const firebaseConfig = {
+    apiKey: "ЗАПОЛНИ_ИЗ_FIREBASE_CONSOLE",
+    authDomain: "ЗАПОЛНИ_ИЗ_FIREBASE_CONSOLE",
+    projectId: "ЗАПОЛНИ_ИЗ_FIREBASE_CONSOLE",
+    storageBucket: "ЗАПОЛНИ_ИЗ_FIREBASE_CONSOLE",
+    messagingSenderId: "ЗАПОЛНИ_ИЗ_FIREBASE_CONSOLE",
+    appId: "ЗАПОЛНИ_ИЗ_FIREBASE_CONSOLE",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const googleProvider = new GoogleAuthProvider();
+  const githubProvider = new GithubAuthProvider();
+
+  let pendingDownloadUrl = null;
+
+  const authModalOverlay = document.getElementById('authModalOverlay');
+  const authModalError = document.getElementById('authModalError');
+  const navLoginBtn = document.getElementById('navLoginBtn');
+  const userChip = document.getElementById('userChip');
+  const userChipAvatar = document.getElementById('userChipAvatar');
+  const userChipName = document.getElementById('userChipName');
+
+  function openAuthModal(){
+    authModalError.style.display = 'none';
+    authModalOverlay.classList.add('open');
+  }
+  function closeAuthModal(){
+    authModalOverlay.classList.remove('open');
+  }
+  document.getElementById('authModalClose').addEventListener('click', ()=>{ pendingDownloadUrl = null; closeAuthModal(); });
+  authModalOverlay.addEventListener('click', e=>{ if(e.target===authModalOverlay){ pendingDownloadUrl = null; closeAuthModal(); } });
+  navLoginBtn.addEventListener('click', openAuthModal);
+
+  async function doSignIn(provider){
+    authModalError.style.display = 'none';
+    try{
+      await signInWithPopup(auth, provider);
+      // onAuthStateChanged below handles closing the modal + resuming any pending download
+    } catch(err){
+      if(err.code === 'auth/popup-closed-by-user') return;
+      authModalError.textContent = 'Не получилось войти: ' + (err.message || err.code);
+      authModalError.style.display = 'block';
+    }
+  }
+  document.getElementById('googleLoginBtn').addEventListener('click', ()=>doSignIn(googleProvider));
+  document.getElementById('githubLoginBtn').addEventListener('click', ()=>doSignIn(githubProvider));
+
+  userChip.addEventListener('click', e=>{
+    if(e.target.id === 'userLogoutBtn') return;
+    userChip.classList.toggle('open');
+  });
+  document.addEventListener('click', e=>{
+    if(!userChip.contains(e.target)) userChip.classList.remove('open');
+  });
+  document.getElementById('userLogoutBtn').addEventListener('click', ()=>{
+    signOut(auth);
+    userChip.classList.remove('open');
+  });
+
+  onAuthStateChanged(auth, user=>{
+    if(user){
+      navLoginBtn.style.display = 'none';
+      userChip.style.display = 'flex';
+      userChipAvatar.src = user.photoURL || '';
+      userChipAvatar.style.display = user.photoURL ? 'block' : 'none';
+      userChipName.textContent = user.displayName || user.email || 'Гость';
+      closeAuthModal();
+      if(pendingDownloadUrl){
+        window.open(pendingDownloadUrl, '_blank');
+        pendingDownloadUrl = null;
+      }
+    } else {
+      navLoginBtn.style.display = 'inline-flex';
+      userChip.style.display = 'none';
+      userChip.classList.remove('open');
+    }
+  });
+
+  // Called by the main script when someone clicks "Скачать мод"
+  window.acRequireAuth = function(url){
+    if(auth.currentUser){
+      window.open(url, '_blank');
+    } else {
+      pendingDownloadUrl = url;
+      openAuthModal();
+    }
+  };
 </script>
 </body>
 </html>
