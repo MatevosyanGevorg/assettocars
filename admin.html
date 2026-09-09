@@ -504,7 +504,9 @@ function showToast(msg, type='success'){
   const t = document.getElementById('toast');
   document.getElementById('toastText').textContent = msg;
   t.className = 'toast show ' + type;
-  setTimeout(()=> t.className = 'toast ' + type, 3200);
+  const duration = type === 'error' ? 9000 : 3200;
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=> t.className = 'toast ' + type, duration);
 }
 function setDirty(v){
   isDirty = v;
@@ -533,8 +535,21 @@ async function loadCarsFromGitHub(){
 
 async function publishCarsToGitHub(){
   const { owner, repo, token } = session;
+
+  // Always refresh the file's current sha right before writing — if it changed
+  // since we loaded (another publish, another tab, a direct git push), using a
+  // stale sha makes GitHub reject the write with a 409 conflict and nothing
+  // gets saved.
+  try{
+    const shaRes = await fetch(`${API}/repos/${owner}/${repo}/contents/data/cars.json`, { headers: ghHeaders(token) });
+    if(shaRes.ok){
+      const shaData = await shaRes.json();
+      fileSha = shaData.sha;
+    }
+  } catch(e){ /* fall through with whatever sha we already have */ }
+
   const content = b64EncodeUnicode(JSON.stringify(cars, null, 2));
-  const res = await fetch(`${API}/repos/${owner}/${repo}/contents/data/cars.json`, {
+  const doPut = () => fetch(`${API}/repos/${owner}/${repo}/contents/data/cars.json`, {
     method:'PUT',
     headers: { ...ghHeaders(token), 'Content-Type':'application/json' },
     body: JSON.stringify({
@@ -544,8 +559,23 @@ async function publishCarsToGitHub(){
       branch: 'main',
     }),
   });
+
+  let res = await doPut();
+
+  // Conflict: someone/something else wrote to the file between our sha fetch
+  // and this request. Refetch the latest sha once more and retry, instead of
+  // just failing.
+  if(res.status === 409){
+    const retryRes = await fetch(`${API}/repos/${owner}/${repo}/contents/data/cars.json`, { headers: ghHeaders(token) });
+    if(retryRes.ok){
+      fileSha = (await retryRes.json()).sha;
+      res = await doPut();
+    }
+  }
+
   if(!res.ok){
     const err = await res.json().catch(()=>({}));
+    console.error('publishCarsToGitHub failed:', res.status, err);
     throw new Error(err.message || ('GitHub ответил ошибкой ' + res.status));
   }
   const data = await res.json();
