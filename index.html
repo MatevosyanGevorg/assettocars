@@ -110,10 +110,24 @@
     padding:16px 20px; font-size:0.95rem; color:var(--text-dim); border-bottom:1px solid var(--line);
   }
   .mobile-menu a:active{ background:var(--surface); color:var(--text); }
+  .mobile-menu-account{ display:none; padding:16px 20px 20px; }
+  @media(max-width:500px){ .mobile-menu-account{ display:block; } }
+  .mobile-login-btn{
+    width:100%; padding:13px; border-radius:999px; border:1px solid var(--line); background:none; color:var(--text);
+    font-weight:600; font-size:0.9rem; cursor:pointer;
+  }
+  .mobile-user-row{ display:none; align-items:center; gap:12px; }
+  .mobile-user-row img{ width:34px; height:34px; border-radius:50%; object-fit:cover; }
+  .mobile-user-row span{ flex:1; font-size:0.9rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mobile-user-row button{
+    padding:9px 16px; border-radius:999px; border:1px solid var(--line); background:none; color:var(--text-dim);
+    font-size:0.85rem; cursor:pointer;
+  }
 
   /* ---------- NAV AUTH ---------- */
   .nav-auth{ display:flex; align-items:center; gap:12px; }
   @media(max-width:600px){ .nav-auth .nav-cta{ display:none; } }
+  @media(max-width:500px){ .nav-auth .nav-login-btn, .nav-auth .user-chip{ display:none !important; } }
   .nav-login-btn{
     padding:11px 20px; border-radius:999px; border:1px solid var(--line); background:none; color:var(--text);
     font-weight:600; font-size:0.9rem; cursor:pointer; transition:all .2s ease;
@@ -558,6 +572,14 @@
     <a href="#spotlight">Мод недели</a>
     <a href="#install">Установка</a>
     <a href="#creator">Для моддеров</a>
+    <div class="mobile-menu-account">
+      <button class="mobile-login-btn" id="mobileLoginBtn">Войти</button>
+      <div class="mobile-user-row" id="mobileUserRow">
+        <img id="mobileUserAvatar" src="" alt="">
+        <span id="mobileUserName"></span>
+        <button type="button" id="mobileLogoutBtn">Выйти</button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -1262,6 +1284,11 @@ bootstrap();
   document.getElementById('authModalClose').addEventListener('click', ()=>{ pendingDownloadUrl = null; closeAuthModal(); });
   authModalOverlay.addEventListener('click', e=>{ if(e.target===authModalOverlay){ pendingDownloadUrl = null; closeAuthModal(); } });
   navLoginBtn.addEventListener('click', openAuthModal);
+  document.getElementById('mobileLoginBtn').addEventListener('click', ()=>{
+    document.getElementById('mobileMenu').classList.remove('open');
+    document.getElementById('navBurger').setAttribute('aria-expanded', 'false');
+    openAuthModal();
+  });
 
   async function doSignIn(provider){
     authModalError.style.display = 'none';
@@ -1288,6 +1315,16 @@ bootstrap();
     signOut(auth);
     userChip.classList.remove('open');
   });
+  document.getElementById('mobileLogoutBtn').addEventListener('click', ()=>{
+    signOut(auth);
+    document.getElementById('mobileMenu').classList.remove('open');
+    document.getElementById('navBurger').setAttribute('aria-expanded', 'false');
+  });
+
+  const mobileLoginBtn = document.getElementById('mobileLoginBtn');
+  const mobileUserRow = document.getElementById('mobileUserRow');
+  const mobileUserAvatar = document.getElementById('mobileUserAvatar');
+  const mobileUserName = document.getElementById('mobileUserName');
 
   onAuthStateChanged(auth, user=>{
     if(user){
@@ -1296,6 +1333,13 @@ bootstrap();
       userChipAvatar.src = user.photoURL || '';
       userChipAvatar.style.display = user.photoURL ? 'block' : 'none';
       userChipName.textContent = user.displayName || user.email || 'Гость';
+
+      mobileLoginBtn.style.display = 'none';
+      mobileUserRow.style.display = 'flex';
+      mobileUserAvatar.src = user.photoURL || '';
+      mobileUserAvatar.style.display = user.photoURL ? 'block' : 'none';
+      mobileUserName.textContent = user.displayName || user.email || 'Гость';
+
       closeAuthModal();
       if(pendingDownloadUrl){
         window.open(pendingDownloadUrl, '_blank');
@@ -1305,6 +1349,9 @@ bootstrap();
       navLoginBtn.style.display = 'inline-flex';
       userChip.style.display = 'none';
       userChip.classList.remove('open');
+
+      mobileLoginBtn.style.display = 'block';
+      mobileUserRow.style.display = 'none';
     }
   });
 
