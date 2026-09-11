@@ -198,7 +198,7 @@
   }
   .gcard .gcard-media{
     height:110px; border-radius:var(--radius-s); margin-bottom:14px;
-    display:flex; align-items:center; justify-content:center;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
     background:radial-gradient(ellipse at 30% 20%, color-mix(in srgb, var(--gc-accent) 26%, transparent), transparent 65%), var(--bg-alt);
     border:1px solid var(--line);
   }
@@ -352,7 +352,9 @@
     border-bottom:1px solid var(--line);
   }
   .card-media svg{ width:72%; color:var(--card-accent, var(--red)); transition:transform .3s ease; }
+  .card-media img{ width:100%; height:100%; object-fit:cover; transition:transform .3s ease; }
   .card:hover .card-media svg{ transform:translateX(4px) scale(1.03); }
+  .card:hover .card-media img{ transform:scale(1.05); }
   .card-badge{
     position:absolute; top:12px; left:12px; font-size:0.72rem; font-weight:600;
     padding:5px 10px; border-radius:999px; background:color-mix(in srgb, var(--card-accent, var(--red)) 20%, var(--bg-alt));
@@ -892,7 +894,7 @@ function render(){
     card.innerHTML = `
       <div class="card-media">
         <span class="card-badge">${meta.label}</span>
-        ${carSvg(meta.color)}
+        ${c.image ? `<img src="${c.image}" alt="${c.name}" loading="lazy">` : carSvg(meta.color)}
       </div>
       <div class="card-body">
         <div class="card-brand">${c.brand}</div>
@@ -981,7 +983,11 @@ function bar(label, value, max, unit){
 function openDetail(c){
   const meta = CATEGORY_META[c.category];
   overlayMedia.style.setProperty('--fillcolor', meta.color);
-  overlayMedia.innerHTML = `<div style="color:${meta.color}">${carSvg(meta.color)}</div>`;
+  overlayMedia.style.padding = c.image ? '0' : '44px';
+  overlayMedia.style.height = c.image ? '320px' : 'auto';
+  overlayMedia.innerHTML = c.image
+    ? `<img src="${c.image}" alt="${c.name}" style="width:100%;height:100%;object-fit:cover;">`
+    : `<div style="color:${meta.color}">${carSvg(meta.color)}</div>`;
   overlayContent.innerHTML = `
     <span class="card-badge" style="--card-accent:${meta.color}; background:color-mix(in srgb, ${meta.color} 20%, var(--bg-alt)); color:${meta.color}; border:1px solid color-mix(in srgb, ${meta.color} 45%, transparent);">${meta.label}</span>
     <h2>${c.name}</h2>
@@ -1117,7 +1123,7 @@ function buildHeroGallery(){
     el.className = `gcard gcard-${i+1}`;
     el.style.setProperty('--gc-accent', meta.color);
     el.innerHTML = `
-      <div class="gcard-media">${carSvg(meta.color)}</div>
+      <div class="gcard-media">${c.image ? `<img src="${c.image}" alt="${c.name}" style="width:100%;height:100%;object-fit:cover;">` : carSvg(meta.color)}</div>
       <span class="gcard-badge">${meta.label}</span>
       <div class="gcard-name">${c.name}</div>
       <div class="gcard-hp">${c.brand} · ${c.hp} л.с.</div>
